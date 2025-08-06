@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISIC Rev.5 Classification Tree Visualization</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .search-box {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            width: 300px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .search-box:focus {
+            border-color: #3498db;
+        }
+        
+        .button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .button:hover {
+            background: #2980b9;
+        }
+        
+        .tree-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 30px;
+            overflow: auto;
+            max-height: 80vh;
+        }
+        
+        .tree {
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .tree-node {
+            margin: 2px 0;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .tree-node:hover {
+            background-color: #f0f4ff;
+        }
+        
+        .tree-node.expanded {
+            background-color: #e8f2ff;
+        }
+        
+        .tree-node.collapsed {
+            opacity: 0.7;
+        }
+        
+        .node-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toggle-icon {
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            color: #3498db;
+            user-select: none;
+        }
+        
+        .toggle-icon:hover {
+            color: #2980b9;
+        }
+        
+        .code {
+            font-weight: bold;
+            color: #2d3748;
+            min-width: 80px;
+        }
+        
+        .name {
+            color: #4a5568;
+            flex: 1;
+        }
+        
+        .level-section { 
+            color: #e53e3e; 
+            font-weight: bold; 
+            border-left: 4px solid #e53e3e;
+            background-color: #fef2f2;
+        }
+        .level-division { 
+            color: #dd6b20; 
+            font-weight: bold; 
+            border-left: 4px solid #dd6b20;
+            background-color: #fffbf0;
+        }
+        .level-group { 
+            color: #38a169; 
+            border-left: 4px solid #38a169;
+            background-color: #f0fff4;
+        }
+        .level-class { 
+            color: #3182ce; 
+            border-left: 4px solid #3182ce;
+            background-color: #eff6ff;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .highlight {
+            background-color: #fff3cd !important;
+            border: 2px solid #ffc107;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+        }
+        
+        .stats {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            color: #6c757d;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            z-index: 1000;
+            max-width: 500px;
+            word-wrap: break-word;
+            pointer-events: none;
+            white-space: normal;
+            line-height: 1.4;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .note-preview {
+            color: #718096;
+            font-size: 0.9em;
+            font-style: italic;
+            margin-left: 10px;
+            max-width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ISIC Rev.5 Classification Tree</h1>
+        <p>International Standard Industrial Classification of All Economic Activities</p>
+    </div>
+    
+    <div class="controls">
+        <input type="text" class="search-box" id="searchBox" placeholder="Search by code or name...">
+        <button class="button" onclick="expandAll()">Expand All</button>
+        <button class="button" onclick="collapseAll()">Collapse All</button>
+        <button class="button" onclick="clearSearch()">Clear Search</button>
+    </div>
+    
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #e53e3e;"></div>
+            <span>Section</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #dd6b20;"></div>
+            <span>Division</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #38a169;"></div>
+            <span>Group</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #3182ce;"></div>
+            <span>Class</span>
+        </div>
+    </div>
+    
+    <div class="tree-container">
+        <div id="loading" class="loading">Loading ISIC Rev.5 classification data...</div>
+        <div id="tree" class="tree" style="display: none;"></div>
+    </div>
+    
+    <div class="stats" id="stats"></div>
+
+    <script src="isic_rev5_data_fixed.js"></script>
+    <script>
+        // ISIC Rev.5 data loaded from external file
+        let treeData = {};
+        let allNodes = [];
+        let expandedNodes = new Set();
+        
+        // Load embedded data
+        function loadData() {
+            try {
+                buildTree(isicData);
+                renderTree();
+                updateStats(isicData.length);
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('loading').innerHTML = 'Error loading data. Please check the data file.';
+            }
+        }
+        
+        function buildTree(data) {
+            // First, create all nodes
+            data.forEach(item => {
+                treeData[item.code] = {
+                    ...item,
+                    children: []
+                };
+            });
+            
+            // Then, build parent-child relationships
+            data.forEach(item => {
+                if (item.parentCode && treeData[item.parentCode]) {
+                    treeData[item.parentCode].children.push(treeData[item.code]);
+                }
+            });
+            
+            // Find root nodes (those without parents or with non-existent parents)
+            allNodes = data.filter(item => !item.parentCode || !treeData[item.parentCode]);
+        }
+        
+        function renderTree() {
+            const treeContainer = document.getElementById('tree');
+            treeContainer.innerHTML = '';
+            
+            allNodes.forEach(node => {
+                renderNode(treeData[node.code], treeContainer, 0);
+            });
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('tree').style.display = 'block';
+        }
+        
+        function renderNode(node, container, depth) {
+            const nodeDiv = document.createElement('div');
+            // Apply color coding based on level
+            let levelClass = '';
+            switch(node.level.toLowerCase()) {
+                case 'section': levelClass = 'level-section'; break;
+                case 'division': levelClass = 'level-division'; break;
+                case 'group': levelClass = 'level-group'; break;
+                case 'class': levelClass = 'level-class'; break;
+                default: levelClass = 'level-class';
+            }
+            nodeDiv.className = `tree-node ${levelClass}`;
+            nodeDiv.id = `node-${node.code}`;
+            
+            // Add hover events for better tooltip display
+            nodeDiv.addEventListener('mouseenter', function(e) {
+                showTooltip(e, node);
+            });
+            nodeDiv.addEventListener('mouseleave', function() {
+                hideTooltip();
+            });
+            
+            const indent = '  '.repeat(depth);
+            const hasChildren = node.children && node.children.length > 0;
+            const isExpanded = expandedNodes.has(node.code);
+            
+            let toggleIcon = '';
+            if (hasChildren) {
+                toggleIcon = `<span class="toggle-icon" onclick="toggleNode('${node.code}')">${isExpanded ? '▼' : '▶'}</span>`;
+                nodeDiv.classList.add(isExpanded ? 'expanded' : 'collapsed');
+            } else {
+                toggleIcon = '<span class="toggle-icon">•</span>';
+            }
+            
+            // Create a preview of the note (first 100 characters)
+            let notePreview = '';
+            if (node.note) {
+                if (node.note.length > 100) {
+                    notePreview = `<span class="note-preview">${node.note.substring(0, 100)}...</span>`;
+                } else {
+                    notePreview = `<span class="note-preview">${node.note}</span>`;
+                }
+            }
+            
+            nodeDiv.innerHTML = `
+                <div class="node-content">
+                    ${indent}${toggleIcon}
+                    <span class="code">[${node.code}]</span>
+                    <span class="name">${node.name}</span>
+                    ${notePreview}
+                </div>
+            `;
+            
+            // Add tooltip with additional information (remove old basic tooltip)
+            // The new hover system will handle tooltips
+            
+            container.appendChild(nodeDiv);
+            
+            // Render children if expanded
+            if (hasChildren && isExpanded) {
+                node.children.sort((a, b) => {
+                    // Sort by code for better organization
+                    return a.code.localeCompare(b.code, undefined, {numeric: true});
+                });
+                
+                node.children.forEach(child => {
+                    renderNode(child, container, depth + 1);
+                });
+            }
+        }
+        
+        function toggleNode(code) {
+            if (expandedNodes.has(code)) {
+                expandedNodes.delete(code);
+            } else {
+                expandedNodes.add(code);
+            }
+            renderTree();
+        }
+        
+        function expandAll() {
+            Object.keys(treeData).forEach(code => {
+                if (treeData[code].children && treeData[code].children.length > 0) {
+                    expandedNodes.add(code);
+                }
+            });
+            renderTree();
+        }
+        
+        function collapseAll() {
+            expandedNodes.clear();
+            // Only keep sections expanded to show the top level (A, B, C, D, etc.)
+            Object.keys(treeData).forEach(code => {
+                const node = treeData[code];
+                if (node.level === 'Section') {
+                    // Don't expand sections - we want to see them collapsed
+                    // This will show only the section level (A, B, C, D, etc.)
+                }
+            });
+            renderTree();
+        }
+        
+        function searchTree() {
+            const query = document.getElementById('searchBox').value.toLowerCase().trim();
+            const allTreeNodes = document.querySelectorAll('.tree-node');
+            
+            // Clear previous highlights
+            allTreeNodes.forEach(node => {
+                node.classList.remove('highlight', 'hidden');
+            });
+            
+            if (!query) return;
+            
+            let matchFound = false;
+            allTreeNodes.forEach(node => {
+                const text = node.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    node.classList.add('highlight');
+                    matchFound = true;
+                    
+                    // Expand parent nodes to show the match
+                    const code = node.id.replace('node-', '');
+                    expandParents(code);
+                } else {
+                    node.classList.add('hidden');
+                }
+            });
+            
+            if (matchFound) {
+                renderTree(); // Re-render to show expanded parents
+            }
+        }
+        
+        function expandParents(code) {
+            const node = treeData[code];
+            if (node && node.parentCode) {
+                expandedNodes.add(node.parentCode);
+                expandParents(node.parentCode);
+            }
+        }
+        
+        function clearSearch() {
+            document.getElementById('searchBox').value = '';
+            document.querySelectorAll('.tree-node').forEach(node => {
+                node.classList.remove('highlight', 'hidden');
+            });
+        }
+        
+        function updateStats(totalCount) {
+            const sectionCount = Object.values(treeData).filter(n => n.level === 'Section').length;
+            const divisionCount = Object.values(treeData).filter(n => n.level === 'Division').length;
+            const groupCount = Object.values(treeData).filter(n => n.level === 'Group').length;
+            const classCount = Object.values(treeData).filter(n => n.level === 'Class').length;
+            
+            document.getElementById('stats').innerHTML = `
+                <strong>ISIC Rev.5 Statistics:</strong> 
+                Total: ${totalCount} | 
+                Sections: ${sectionCount} | 
+                Divisions: ${divisionCount} | 
+                Groups: ${groupCount} | 
+                Classes: ${classCount}
+            `;
+        }
+        
+        // Tooltip functions
+        let tooltip = null;
+        
+        function showTooltip(event, node) {
+            hideTooltip(); // Remove any existing tooltip
+            
+            tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            tooltip.innerHTML = `
+                <strong>Level:</strong> ${node.level}<br>
+                <strong>Code:</strong> ${node.code}<br>
+                <strong>Name:</strong> ${node.name}<br>
+                <strong>Keywords:</strong> ${node.keywords || 'N/A'}<br>
+                ${node.note ? '<strong>Description:</strong><br>' + node.note : ''}
+            `;
+            
+            document.body.appendChild(tooltip);
+            
+            // Position tooltip
+            const rect = tooltip.getBoundingClientRect();
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY - rect.height - 10) + 'px';
+        }
+        
+        function hideTooltip() {
+            if (tooltip) {
+                document.body.removeChild(tooltip);
+                tooltip = null;
+            }
+        }
+        
+        // Setup search functionality
+        document.getElementById('searchBox').addEventListener('input', function() {
+            setTimeout(searchTree, 300); // Debounce search
+        });
+        
+        // Initialize
+        loadData();
+    </script>
+</body>
+</html>
