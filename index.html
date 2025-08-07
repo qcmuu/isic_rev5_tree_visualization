@@ -287,7 +287,7 @@
     
     <div class="stats" id="stats"></div>
 
-    <script src="isic_rev5_data_fixed.js"></script>
+    <script src="isic_rev5_data_fixed_最终修正版数据.js"></script>
     <script>
         // ISIC Rev.5 data loaded from external file
         let treeData = {};
@@ -443,33 +443,49 @@
         
         function searchTree() {
             const query = document.getElementById('searchBox').value.toLowerCase().trim();
-            const allTreeNodes = document.querySelectorAll('.tree-node');
-            
-            // Clear previous highlights
-            allTreeNodes.forEach(node => {
-                node.classList.remove('highlight', 'hidden');
-            });
-            
-            if (!query) return;
-            
-            let matchFound = false;
-            allTreeNodes.forEach(node => {
-                const text = node.textContent.toLowerCase();
-                if (text.includes(query)) {
-                    node.classList.add('highlight');
-                    matchFound = true;
-                    
-                    // Expand parent nodes to show the match
-                    const code = node.id.replace('node-', '');
-                    expandParents(code);
-                } else {
-                    node.classList.add('hidden');
-                }
-            });
-            
-            if (matchFound) {
-                renderTree(); // Re-render to show expanded parents
+
+            if (!query) {
+                clearSearch();
+                return;
             }
+
+            // First, expand all nodes to make sure we can search through all data
+            expandAll();
+
+            // Wait a bit for the tree to re-render, then perform search
+            setTimeout(() => {
+                const allTreeNodes = document.querySelectorAll('.tree-node');
+
+                // Clear previous highlights
+                allTreeNodes.forEach(node => {
+                    node.classList.remove('highlight', 'hidden');
+                });
+
+                let matchFound = false;
+                let matchingNodes = [];
+
+                allTreeNodes.forEach(node => {
+                    const text = node.textContent.toLowerCase();
+                    if (text.includes(query)) {
+                        matchingNodes.push(node);
+                        matchFound = true;
+
+                        // Expand parent nodes to show the match
+                        const code = node.id.replace('node-', '');
+                        expandParents(code);
+                    } else {
+                        node.classList.add('hidden');
+                    }
+                });
+
+                // Apply highlights after hiding non-matching nodes
+                matchingNodes.forEach(node => {
+                    node.classList.remove('hidden');
+                    node.classList.add('highlight');
+                });
+
+                console.log(`Search for "${query}" found ${matchingNodes.length} matches`);
+            }, 100);
         }
         
         function expandParents(code) {

@@ -68,10 +68,16 @@ This repository also includes a similar visualization tool for GB/T 4754-2017 (C
 
 This project is for educational and research purposes only. The ISIC classification standard is copyrighted by the United Nations Statistics Division.
 
+## Credits
+
+This project was developed by researchers from:
+- **SNU** (Seoul National University)
+- **HKU** (The University of Hong Kong)
+
 ## Contributing
 
 Issues and Pull Requests are welcome to improve this project.
 
 ---
 
-*Last updated: January 2025*
+*Last updated: August 2025*
