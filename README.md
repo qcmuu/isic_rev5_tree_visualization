@@ -25,11 +25,8 @@ This project provides a web-based interactive interface for browsing and searchi
 ## File Structure
 
 ```
-├── isic_rev5_tree_visualization.html    # Main visualization interface
+├── index.html    # Main visualization interface
 ├── isic_rev5_data_fixed.js             # ISIC Rev.5 classification data
-├── raw_data/                           # Raw data files
-├── scripts/                            # Data processing scripts
-└── documentation/                      # Project documentation
 ```
 
 ## Usage
@@ -62,7 +59,7 @@ ISIC Rev.5 contains:
 ## Related Projects
 
 This repository also includes a similar visualization tool for GB/T 4754-2017 (China's National Economic Industry Classification):
-- `gb_t_4754_tree_visualization.html`
+- [gb_t_4754_tree_visualization](https://qcmuu.github.io/gb_t_4754_tree_visualization)
 
 ## License
 
